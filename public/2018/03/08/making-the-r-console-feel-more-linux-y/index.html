@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.36.1" />
+
+
+<title>Making the R console feel more linux-y - Stack::Push</title>
+<meta property="og:title" content="Making the R console feel more linux-y - Stack::Push">
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdn.bootcss.com/highlight.js/9.11.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/fdx.png"
+         width="50"
+         height="50"
+         alt="Stack::Push">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/ConradStack">GitHub</a></li>
+    
+    <li><a href="https://twitter.com/ConradStack">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">1 min read</span>
+    
+
+    <h1 class="article-title">Making the R console feel more linux-y</h1>
+
+    
+    <span class="article-date">2018/03/08</span>
+    
+
+    <div class="article-content">
+      <p>When I am working in R interactively, through the console, I often find myself trying to run the common linux shell commands: <code>pwd</code> and <code>ls</code> (instead of <code>getwd()</code> and <code>list.files()</code>, respectively).</p>
+
+<p>While reading a <a href="http://colinfay.me/ractivebinfing/">nice explanation of active binding in R from Colin Fay</a>, I realized that active binding provides a way to bring the <code>pwd</code> and <code>ls</code> commands to the R console:</p>
+
+<pre><code class="language-r"># pwd - print present working directory
+makeActiveBinding(sym = &quot;pwd&quot;, 
+	fun = function(value){
+		getwd()
+	}, 
+	env = .GlobalEnv
+)
+
+# ls - list files
+makeActiveBinding(sym = &quot;ls&quot;, 
+	fun = function(value){
+		list.files(all.files=T)
+	}, 
+	env = .GlobalEnv
+)
+</code></pre>
+
+<p>There are a couple of important caveats to the above code:</p>
+
+<ul>
+<li>Binding <code>ls</code> does not break calls to <code>ls()</code>, but it obviously will break the default behavior of typing <code>ls</code>, which would return to the function definition</li>
+<li><code>ls</code> cannot be called using any additional arguments that you might use on your linux shell (e.g., <code>ls -laht</code>).  This greatly lessens the usefulness of the implementation above.<br /></li>
+</ul>
+
+<p>It is tempting to explore this kind of R console customization further, but I imagine it will be more worthwhile to learn to use Rstudio&rsquo;s built-in Terminal.</p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/highlight.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/r.min.js"></script>
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+
+    
+  </body>
+</html>
+

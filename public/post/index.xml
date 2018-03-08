@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Stack::Push</title>
+    <link>/post/</link>
+    <description>Recent content in Posts on Stack::Push</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 08 Mar 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Making the R console feel more linux-y</title>
+      <link>/2018/03/08/making-the-r-console-feel-more-linux-y/</link>
+      <pubDate>Thu, 08 Mar 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/03/08/making-the-r-console-feel-more-linux-y/</guid>
+      <description>When I am working in R interactively, through the console, I often find myself trying to run the common linux shell commands: pwd and ls (instead of getwd() and list.files(), respectively).
+While reading a nice explanation of active binding in R from Colin Fay, I realized that active binding provides a way to bring the pwd and ls commands to the R console:
+# pwd - print present working directory makeActiveBinding(sym = &amp;quot;pwd&amp;quot;, fun = function(value){ getwd() }, env = .</description>
+    </item>
+    
+  </channel>
+</rss>
