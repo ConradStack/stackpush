@@ -6,10 +6,21 @@
     <description>Recent content on Stack::Push</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 08 Mar 2018 21:48:51 -0700</lastBuildDate>
+    <lastBuildDate>Tue, 20 Mar 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Retrieving genomic data in R with a call to htsget (v1.0.0)</title>
+      <link>/2018/03/20/retrieving-genomic-data-in-r-with-a-call-to-htsget-v1-0-0/</link>
+      <pubDate>Tue, 20 Mar 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/03/20/retrieving-genomic-data-in-r-with-a-call-to-htsget-v1-0-0/</guid>
+      <description>Hoping to develop a better understanding of the htsget API specifiction and making API calls through the web in R, I put together this short example script.
+We will make a GET request for a small slice of aligned sequence reads, following this example. The reference in the case below is the &amp;lsquo;GRCh37&amp;rsquo; Human genome assembly, and the API implementation is provided by DNAnexus.
+require(httr) require(curl) require(jsonlite) require(stringr) # download a small slice of bam file by calling htsget reads/ API # submit initial query: url_str = &amp;quot;http://htsnexus.</description>
+    </item>
     
     <item>
       <title>About</title>

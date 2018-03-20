@@ -1,0 +1,97 @@
+---
+title: Retrieving genomic data in R with a call to htsget (v1.0.0)
+author: Conrad Stack
+date: '2018-03-20'
+slug: retrieving-genomic-data-in-r-with-a-call-to-htsget-v1-0-0
+categories:
+  - R
+  - htsget
+tags: []
+---
+
+Hoping to develop a better understanding of the [htsget API](https://samtools.github.io/hts-specs/htsget.html) specifiction and making API calls through the web in R, I put together this short example script.  
+
+
+We will make a GET request for a small slice of aligned sequence reads, following [this example](https://github.com/jeromekelleher/htsget/blob/master/docs/quickstart.rst).  The reference in the case below is the 'GRCh37' Human genome assembly, and the API implementation is provided by [DNAnexus](www.dnanexus.com).   
+
+
+```r
+require(httr)
+require(curl)
+require(jsonlite)
+require(stringr)
+
+# download a small slice of bam file by calling htsget reads/ API
+
+# submit initial query:
+url_str = "http://htsnexus.rnd.dnanex.us/v1/reads/BroadHiSeqX_b37/NA12878"
+query=list(referenceName=2, start=1000, end=20000)
+res = GET(url_str, query=query)
+```
+
+```
+## Warning in strptime(x, fmt, tz = "GMT"): unknown timezone 'zone/tz/2018c.
+## 1.0/zoneinfo/America/New_York'
+```
+
+The GET request returns a "ticket", which allows us to "obtain the desired data in the specified format, which may involve follow-on requests to other endpoints".
+
+
+```r
+ticket <- fromJSON(rawToChar(res$content))
+```
+
+Because `ticket` might include a number of chunks - which collectively form the final data set - we need to loop over all returned urls in `ticket$htsget$urls$url`.  Within this loop, we write any in-line [data uri](https://en.wikipedia.org/wiki/Data_URI_scheme) directly to the file connection (`fout`) we've opened to hold the requested data; https uri require an additional GET request, whose response is written to the same connection:
+
+
+```r
+n_url = length(ticket$htsget$urls$url)
+if(n_url > 0)
+{
+	fout = file("~/tmp/test.bam", "ab", raw=TRUE)
+	for(i in 1:n_url){
+
+		tmp = ticket$htsget$urls$url[i]
+		if( grepl("^data", tmp ) )
+		{
+			# Case 1: URL is data uri. Write directly to file
+			print(i)	
+			payload_start = (regexpr(",", tmp, fixed=TRUE)[1]+1)
+			payload = str_sub(tmp, payload_start)
+			print(nchar(payload))
+			writeBin(base64_dec(payload), fout, useBytes=TRUE)	
+
+		} else {
+
+			# Case 2: URL is an HTTPS URI. Submit another GET request to that URL, including the associated headers
+			res_body = GET(
+				tmp,
+				add_headers( unlist(ticket$htsget$urls$headers[2,,drop=T]) )
+			)
+			writeBin( res_body$content, fout, useBytes = TRUE )
+			
+		}
+	}
+	close(fout)
+} else {
+	stop("No URLs in response")
+}
+```
+
+```
+## [1] 1
+## [1] 11800
+## [1] 3
+## [1] 40
+```
+
+This was a learning experience for me, and so I can only confirm that the above code worked on my particular machine.  I would really appreciate comments pointing out edge cases where my code will fail, or any other bugs.
+
+
+
+
+```eval
+# 
+R version 3.3.2 (2016-10-31)
+```
+

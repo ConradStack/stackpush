@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.36.1" />
+
+
+<title>Retrieving genomic data in R with a call to htsget (v1.0.0) - Stack::Push</title>
+<meta property="og:title" content="Retrieving genomic data in R with a call to htsget (v1.0.0) - Stack::Push">
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdn.bootcss.com/highlight.js/9.11.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/fdx.png"
+         width="50"
+         height="50"
+         alt="Stack::Push">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/ConradStack">GitHub</a></li>
+    
+    <li><a href="https://twitter.com/ConradStack">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">2 min read</span>
+    
+
+    <h1 class="article-title">Retrieving genomic data in R with a call to htsget (v1.0.0)</h1>
+
+    
+    <span class="article-date">2018/03/20</span>
+    
+
+    <div class="article-content">
+      <p>Hoping to develop a better understanding of the <a href="https://samtools.github.io/hts-specs/htsget.html">htsget API</a> specifiction and making API calls through the web in R, I put together this short example script.</p>
+
+<p>We will make a GET request for a small slice of aligned sequence reads, following <a href="https://github.com/jeromekelleher/htsget/blob/master/docs/quickstart.rst">this example</a>.  The reference in the case below is the &lsquo;GRCh37&rsquo; Human genome assembly, and the API implementation is provided by <a href="www.dnanexus.com">DNAnexus</a>.</p>
+
+<pre><code class="language-r">require(httr)
+require(curl)
+require(jsonlite)
+require(stringr)
+
+# download a small slice of bam file by calling htsget reads/ API
+
+# submit initial query:
+url_str = &quot;http://htsnexus.rnd.dnanex.us/v1/reads/BroadHiSeqX_b37/NA12878&quot;
+query=list(referenceName=2, start=1000, end=20000)
+res = GET(url_str, query=query)
+</code></pre>
+
+<pre><code>## Warning in strptime(x, fmt, tz = &quot;GMT&quot;): unknown timezone 'zone/tz/2018c.
+## 1.0/zoneinfo/America/New_York'
+</code></pre>
+
+<p>The GET request returns a &ldquo;ticket&rdquo;, which allows us to &ldquo;obtain the desired data in the specified format, which may involve follow-on requests to other endpoints&rdquo;.</p>
+
+<pre><code class="language-r">ticket &lt;- fromJSON(rawToChar(res$content))
+</code></pre>
+
+<p>Because <code>ticket</code> might include a number of chunks - which collectively form the final data set - we need to loop over all returned urls in <code>ticket$htsget$urls$url</code>.  Within this loop, we write any in-line <a href="https://en.wikipedia.org/wiki/Data_URI_scheme">data uri</a> directly to the file connection (<code>fout</code>) we&rsquo;ve opened to hold the requested data; https uri require an additional GET request, whose response is written to the same connection:</p>
+
+<pre><code class="language-r">n_url = length(ticket$htsget$urls$url)
+if(n_url &gt; 0)
+{
+	fout = file(&quot;~/tmp/test.bam&quot;, &quot;ab&quot;, raw=TRUE)
+	for(i in 1:n_url){
+
+		tmp = ticket$htsget$urls$url[i]
+		if( grepl(&quot;^data&quot;, tmp ) )
+		{
+			# Case 1: URL is data uri. Write directly to file
+			print(i)	
+			payload_start = (regexpr(&quot;,&quot;, tmp, fixed=TRUE)[1]+1)
+			payload = str_sub(tmp, payload_start)
+			print(nchar(payload))
+			writeBin(base64_dec(payload), fout, useBytes=TRUE)	
+
+		} else {
+
+			# Case 2: URL is an HTTPS URI. Submit another GET request to that URL, including the associated headers
+			res_body = GET(
+				tmp,
+				add_headers( unlist(ticket$htsget$urls$headers[2,,drop=T]) )
+			)
+			writeBin( res_body$content, fout, useBytes = TRUE )
+			
+		}
+	}
+	close(fout)
+} else {
+	stop(&quot;No URLs in response&quot;)
+}
+</code></pre>
+
+<pre><code>## [1] 1
+## [1] 11800
+## [1] 3
+## [1] 40
+</code></pre>
+
+<p>This was a learning experience for me, and so I can only confirm that the above code worked on my particular machine.  I would really appreciate comments pointing out edge cases where my code will fail, or any other bugs.</p>
+
+<pre><code class="language-eval"># 
+R version 3.3.2 (2016-10-31)
+</code></pre>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/highlight.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/r.min.js"></script>
+<script src="//cdn.bootcss.com/highlight.js/9.11.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+
